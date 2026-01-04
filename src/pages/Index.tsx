@@ -69,24 +69,7 @@ const FIAT_CURRENCIES = {
   },
 };
 
-const MOCK_RATES: { [key: string]: number } = {
-  'BTC': 6500000,
-  'ETH': 350000,
-  'USDT-TRC20': 95,
-  'USDT-BEP20': 95,
-  'USDT-ERC20': 95,
-  'USDT-ARB': 95,
-  'USDT-TON': 95,
-  'USDT-MATIC': 95,
-  'TRX': 15,
-  'XRP': 55,
-  'TON': 450,
-  'USDC-ERC20': 95,
-  'USDC-SOL': 95,
-  'USDC-MATIC': 95,
-  'ETH-ARB': 350000,
-  'ETH-BEP20': 350000,
-};
+const API_URL = 'https://functions.poehali.dev/2de422c9-d36c-4533-bb21-d13c2c8700dd';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -104,15 +87,37 @@ const Index = () => {
   const [email, setEmail] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [tagIban, setTagIban] = useState('');
+  const [rates, setRates] = useState<{ [key: string]: number }>({});
+  const [ratesLoading, setRatesLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRates();
+    const interval = setInterval(fetchRates, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchRates = async () => {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      if (data.success && data.rates) {
+        setRates(data.rates);
+        setRatesLoading(false);
+      }
+    } catch (error) {
+      console.error('Failed to fetch rates:', error);
+      setRatesLoading(false);
+    }
+  };
 
   const calculateExchange = (amount: string, isFromField: boolean) => {
-    if (!amount || isNaN(Number(amount))) {
+    if (!amount || isNaN(Number(amount)) || Object.keys(rates).length === 0) {
       setToAmount('');
       return;
     }
 
-    const fromRate = MOCK_RATES[fromCurrency] || 1;
-    const toRate = MOCK_RATES[toCurrency] || 1;
+    const fromRate = rates[fromCurrency] || 1;
+    const toRate = rates[toCurrency] || 1;
 
     if (isFromField) {
       if (exchangeMode === 'crypto-to-fiat') {
@@ -237,6 +242,12 @@ const Index = () => {
               <p className="text-xl text-muted-foreground">
                 Быстро, надежно, выгодно
               </p>
+              {ratesLoading && (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Icon name="Loader" size={16} className="animate-spin" />
+                  <span>Загрузка актуальных курсов...</span>
+                </div>
+              )}
             </div>
 
             <Card className="glass-effect p-8 space-y-6 border-border/50">
