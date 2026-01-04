@@ -15,10 +15,10 @@
     --popover: 240 10% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 263 70% 50%;
+    --primary: 199 89% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 200 100% 50%;
+    --secondary: 262 83% 58%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 240 5% 25%;
@@ -69,10 +69,14 @@
 
 @layer utilities {
   .gradient-primary {
-    background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+    background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 100%);
   }
 
   .gradient-secondary {
+    background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+  }
+
+  .gradient-accent {
     background: linear-gradient(135deg, #0ea5e9 0%, #1eaedb 100%);
   }
 
