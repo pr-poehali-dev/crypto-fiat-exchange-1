@@ -70,6 +70,7 @@ const FIAT_CURRENCIES = {
 };
 
 const API_URL = 'https://functions.poehali.dev/2de422c9-d36c-4533-bb21-d13c2c8700dd';
+const TRACK_API = 'https://functions.poehali.dev/8ec5e4f3-1975-4ec1-85bd-52373bacc02a';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -89,10 +90,47 @@ const Index = () => {
   const [tagIban, setTagIban] = useState('');
   const [rates, setRates] = useState<{ [key: string]: number }>({});
   const [ratesLoading, setRatesLoading] = useState(true);
+  const [partnerId, setPartnerId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchRates();
     const interval = setInterval(fetchRates, 60000);
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    const fromParam = urlParams.get('from');
+    const toParam = urlParams.get('to');
+    const cityParam = urlParams.get('city');
+    
+    if (refCode) {
+      trackPartnerClick(refCode, fromParam || '', toParam || '', cityParam || '');
+      document.cookie = `partner_ref=${refCode}; max-age=315360000; path=/`;
+    } else {
+      const cookies = document.cookie.split(';').map(c => c.trim());
+      const refCookie = cookies.find(c => c.startsWith('partner_ref='));
+      if (refCookie) {
+        const savedRef = refCookie.split('=')[1];
+        trackPartnerClick(savedRef, '', '', '');
+      }
+    }
+    
+    if (fromParam) {
+      const cryptoMatch = Object.entries(CRYPTO_CURRENCIES).find(([_, code]) => code === fromParam);
+      if (cryptoMatch) {
+        setFromCurrency(cryptoMatch[1]);
+      }
+    }
+    
+    if (toParam) {
+      for (const [currency, methods] of Object.entries(FIAT_CURRENCIES)) {
+        const methodMatch = Object.entries(methods).find(([_, code]) => code === toParam);
+        if (methodMatch) {
+          setToCurrency(methodMatch[1]);
+          break;
+        }
+      }
+    }
+    
     return () => clearInterval(interval);
   }, []);
 
@@ -107,6 +145,29 @@ const Index = () => {
     } catch (error) {
       console.error('Failed to fetch rates:', error);
       setRatesLoading(false);
+    }
+  };
+
+  const trackPartnerClick = async (refCode: string, from: string, to: string, city: string) => {
+    try {
+      const response = await fetch(TRACK_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'track_click',
+          partner_code: refCode,
+          from_currency: from,
+          to_currency: to,
+          city: city
+        })
+      });
+      
+      const data = await response.json();
+      if (data.success && data.partner_id) {
+        setPartnerId(data.partner_id);
+      }
+    } catch (error) {
+      console.error('Failed to track partner click:', error);
     }
   };
 
@@ -141,8 +202,34 @@ const Index = () => {
     calculateExchange(value, true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const orderId = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    const orderData = {
+      action: 'create_order',
+      partner_id: partnerId,
+      from_currency: fromCurrency,
+      to_currency: toCurrency,
+      from_amount: parseFloat(fromAmount),
+      to_amount: parseFloat(toAmount),
+      exchange_rate: rates[fromCurrency] || 0,
+      margin_profit: parseFloat(toAmount) * 0.02,
+      customer_email: email,
+      customer_contact: phone || telegram,
+      wallet_address: exchangeMode === 'fiat-to-crypto' ? '' : '',
+      card_number: cardNumber
+    };
+    
+    try {
+      await fetch(TRACK_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+    } catch (error) {
+      console.error('Failed to create order:', error);
+    }
+    
     navigate('/order-confirmation', {
       state: {
         orderId,
@@ -224,10 +311,16 @@ const Index = () => {
               </button>
             </div>
 
-            <Button className="gradient-secondary">
-              <Icon name="MessageCircle" size={18} />
-              <span className="ml-2">Чат поддержки</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => navigate('/partner-register')}>
+                <Icon name="Users" size={18} />
+                <span className="ml-2">Партнерам</span>
+              </Button>
+              <Button className="gradient-secondary">
+                <Icon name="MessageCircle" size={18} />
+                <span className="ml-2">Чат</span>
+              </Button>
+            </div>
           </div>
         </div>
       </nav>

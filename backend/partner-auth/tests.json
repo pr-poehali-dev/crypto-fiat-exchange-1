@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "name": "Register new partner",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "register",
+        "email": "test@example.com",
+        "password": "test123456"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "partner_code": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Handle OPTIONS request",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}

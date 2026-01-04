@@ -1,0 +1,31 @@
+{
+  "tests": [
+    {
+      "name": "Create exchange order",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "create_order",
+        "from_currency": "BTC",
+        "to_currency": "RUB-SBP",
+        "from_amount": 0.01,
+        "to_amount": 65000,
+        "exchange_rate": 6500000,
+        "margin_profit": 1300,
+        "customer_email": "test@example.com"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "order_number": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Handle OPTIONS request",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}

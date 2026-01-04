@@ -1,3 +1,6 @@
 {
+  "partner-dashboard": "https://functions.poehali.dev/3f5e4441-9d48-4e84-ad94-358398ecd78a",
+  "partner-auth": "https://functions.poehali.dev/9b14cf78-8c7c-447f-9f9e-fc0f5a8be268",
+  "partner-track": "https://functions.poehali.dev/8ec5e4f3-1975-4ec1-85bd-52373bacc02a",
   "get-rates": "https://functions.poehali.dev/2de422c9-d36c-4533-bb21-d13c2c8700dd"
 }
